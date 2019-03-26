@@ -48,12 +48,23 @@
 
     let gameOver
 
+    let music
+    let pickupSound
+    let explosionSound
+    let particlesYellow
+    let particlesRed
+
     function preload(){
         this.load.image('sky', 'assets/sky.png')
         this.load.image('ground', 'assets/platform.png')
         this.load.image('star', 'assets/star.png')
         this.load.image('bomb', 'assets/bomb.png')
         this.load.spritesheet('dude', 'assets/dude.png', {frameWidth: 32, frameHeight: 48})
+        this.load.image('red', 'http://labs.phaser.io/assets/particles/red.png')
+        this.load.image('yellow', 'http://labs.phaser.io/assets/particles/yellow.png')
+        this.load.audio('music', 'assets/music.mp3')
+        this.load.audio('pickupSound', 'assets/pickup.mp3')
+        this.load.audio('explosionSound', 'assets/explosion.mp3')
 
 
     }
@@ -73,6 +84,10 @@
         player = this.physics.add.sprite(100, 450, 'dude')
         player.setCollideWorldBounds(true)
         player.setBounce(0.2)
+
+        // this.sound.add('music')
+        // this.sound.add('pickup')
+        // this.sound.add('explosion')
 
         this.anims.create({
             key: 'left',
@@ -118,6 +133,7 @@
         function collectStar(player, star){
             star.disableBody(true, true)
 
+            pickupSound.play()
             score += 10
             scoreText.setText(`Score: ${score}`)
 
@@ -133,6 +149,15 @@
                 bomb.setCollideWorldBounds(true)
                 bomb.setVelocity(Phaser.Math.Between(-200, 200), 20)
                 bomb.allowGravity = false
+
+                let particlesRed = this.add.particles('red')
+            
+                let emitterRed = particlesRed.createEmitter({
+                    speed: 50,
+                    scale: { start: 0.05, end: 0}
+                })
+
+                emitterRed.startFollow(bomb)
             }
         }
 
@@ -149,8 +174,37 @@
             player.setTint(0xff0000)
             player.anims.play('turn')
 
+            music.stop()
+            explosionSound.play()
             gameOver = true
         }
+
+        let musicConfig = {
+            mute: false,
+            volume: 1,
+            rate: 1,
+            detune: 0,
+            seek: 0,
+            loop: true,
+            delay: 0
+        }
+
+        music = this.sound.add('music', musicConfig)
+        pickupSound = this.sound.add('pickupSound', pickupSound)
+        explosionSound = this.sound.add('explosionSound', explosionSound)
+
+        music.play()
+
+        particlesYellow = this.add.particles('yellow')
+
+        let emitterYellow = particlesYellow.createEmitter({
+            speed: 50,
+            scale: { start: 0.05, end: 0}
+        })
+
+        emitterYellow.startFollow(player)
+        
+
     }
     function update(){
 

@@ -33,7 +33,6 @@ http.createServer(function(req, res) {
     // http:localhost:8000/../fileInDanger.html/||||\\\\\
     const sanitizePath = path.normalize(parsedUrl.pathname).replace(/^(\.\.[\/\\])+/, '')
     
-    console.log(`__dirname:`, __dirname)
     let pathName = path.join(__dirname, sanitizePath)
 
     fs.exists(pathName, function(exist) {
