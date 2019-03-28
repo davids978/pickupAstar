@@ -51,8 +51,13 @@
     let music
     let pickupSound
     let explosionSound
-    let particlesYellow
+
     let particlesRed
+
+    let acceleration
+    let accelerationStarAvaiable = false
+    let particlesYellow
+    let accelerationText
 
     function preload(){
         this.load.image('sky', 'assets/sky.png')
@@ -133,12 +138,50 @@
         function collectStar(player, star){
             star.disableBody(true, true)
 
+            if(star['accelerate']){
+                accelerationStarAvaiable = false
+                star['emitter'].visible = false
+
+                delete star['accelerate']
+                delete star['emitter']
+
+                acceleration = true
+
+                let emitter = createEmitter(particlesYellow)
+
+                player['emmiter'] = emitter
+
+                emitter.startFollow(player)
+
+                let timer = 3
+
+                if(accelerationText) accelerationText.destroy()
+
+                accelerationText = this.add.text(16, 56, `Acceleration: ${timer}`, {fontSize: '24px', fill: '#000'})
+
+                let interval = setInterval( () => {
+
+                    accelerationText.setText(`Acceleration ${timer--}`)
+
+                    if(timer == 0) {
+                        stopAcceleration()
+
+                        clearInterval(interval)
+                    }
+                }, 1000);
+            }
             pickupSound.play()
             score += 10
             scoreText.setText(`Score: ${score}`)
 
             if(stars.countActive() === 0){
+                let randomStar = Math.round(Math.random() * stars.children.size)
+
+                let i = 0
+                
                 stars.children.iterate(function(child){
+                    if ( i == randomStar && !accelerationStarAvaiable && !acceleration) startAcceleration(child)
+                    i++
                     child.enableBody(true, child.x, 0, true, true)
                 })
 
@@ -195,24 +238,47 @@
 
         music.play()
 
-        particlesYellow = this.add.particles('yellow')
+        let startAcceleration = (whoToFollow) => {
+            if (particlesYellow) particlesYellow.destroy()
 
-        let emitterYellow = particlesYellow.createEmitter({
-            speed: 50,
-            scale: { start: 0.05, end: 0}
-        })
+            particlesYellow = this.add.particles('yellow')
 
-        emitterYellow.startFollow(player)
-        
+            let emitterYellow = createEmitter(particlesYellow)
+            emitterYellow.startFollow(whoToFollow)
+
+            whoToFollow['accelerate'] = true
+            whoToFollow['emitter'] = emitterYellow
+
+            accelerationStarAvaiable = true
+        }
 
     }
+    
+    function createEmitter(particles){
+        let emitter = particles.createEmitter({
+            speed: 50,
+            scale: {start: 0.05, end: 0}
+        })
+
+        return emitter
+    }
+
+    function stopAcceleration(){
+
+        accelerationText.destroy()
+        particlesYellow.destroy()
+
+        acceleration = false
+    }
+
+
     function update(){
 
         if(cursors.left.isDown){
-            player.setVelocityX(-160)
+            player.setVelocityX(-160 * (acceleration ? 1.5 : 1))
             player.anims.play('left', true)
         } else if(cursors.right.isDown){
-            player.setVelocityX(160)
+            player.setVelocityX(160 * (acceleration ? 1.5 : 1))
             player.anims.play('right', true)
         } else {
             player.setVelocityX(0)
